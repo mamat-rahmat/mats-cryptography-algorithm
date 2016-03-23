@@ -20,7 +20,7 @@ class mats_cipher{
 		bool isCBC, isCFB;
 		mats_cipher();		
 		
-		string XOR (string s1, string s2);	  
+		string XOR (string s1, string s2);
 		char XOR(char c1, char c2);
 
 		string single_encipher(string s, string key);

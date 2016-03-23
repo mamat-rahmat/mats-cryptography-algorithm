@@ -238,7 +238,11 @@ string mats_cipher::sub_bytes(string s) {
 }
 
 string mats_cipher::get_sha256(string s) {
-	string res = sha256(s);
+	string res = "";
+    string sha = sha256(s);
+    for(int i=0; i<32; i++) {
+        res += char(sha[i]*16 + sha[i+1]);
+    }
 	return res;
 }
 
