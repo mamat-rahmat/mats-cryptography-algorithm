@@ -4,23 +4,16 @@ using namespace std;
 
 int main() {
 	mats_cipher cc;
-	
-	/*	
-	for(int i=0; i<256; i++) {
-		cout << char(i) << " " << char(cc.s_box[i]) << " " << char(i) << " " << char(cc.s_box_reverse[i]) << endl;
-	}
-	cout << endl;
-	*/
 
-	/*
+	
 	cout << "# TEST get_sha256() and convert_256_to_128()" << endl;
 	cout << "SHA256(mamat)  : " << cc.get_sha256("mamat") << endl;
 	cout << "Convert to 128 : " << cc.convert_256_to_128(cc.get_sha256("mamat")) << endl;
 	cout << endl;
-	*/
+	
 
-	/*
-	cout << "# TEST get_sha256() and convert_256_to_128()" << endl;
+	
+	cout << "# TEST single_encipher() and single_decipher()" << endl;
 	string plain1 = "1234567812345678";
 	string key1 = "asdfghjkasdfghjk";
 	cout << "plain : " << plain1 << endl;
@@ -30,7 +23,7 @@ int main() {
 	string dec1 = cc.single_decipher(enc1,key1);
 	cout << "decrypted : " << dec1 << endl;
 	cout << endl;
-	*/
+	
 
 	
 	cout << "# TEST sub_bytes()" << endl;
@@ -43,7 +36,7 @@ int main() {
 	cout << endl;
 	
 
-	/*
+	
 	cout << "# TEST do_encipher() and do_decipher()" << endl;
 	// ECB mode if two of them are false
 	cc.isCBC = false;
@@ -59,5 +52,5 @@ int main() {
 	cout << "dencrypted : " << dec << endl;
 	cout << endl;
 	return 0;
-	*/
+	
 }

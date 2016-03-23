@@ -261,12 +261,10 @@ string mats_cipher::sub_bytes(string s, bool encrypt) {
 	string res = "";
 	for (int i = 0; i < s.size(); i++) {
 		if(encrypt) {
-			res+=s_box[int(s[i])];
-			cout << s[i] << " " << s_box[s[i]] << endl;
+			res+=s_box[(unsigned char) s[i] ];
 		}
 		else {
-			res+=s_box_reverse[int(s[i])];
-			cout << s[i] << " " << s_box_reverse[s[i]] << endl;
+			res+=s_box_reverse[(unsigned char) s[i] ];
 		}
 	}
 	return res;
