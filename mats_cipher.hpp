@@ -14,10 +14,10 @@ typedef pair<string,string> pss;
 class mats_cipher{
 	private:
 		vector<string> s_blocks;
+
+	public:
 		static const unsigned char s_box[256];
 		static const unsigned char s_box_reverse[256];
-
-	public: 
 		bool isCBC, isCFB;
 		mats_cipher();		
 		
