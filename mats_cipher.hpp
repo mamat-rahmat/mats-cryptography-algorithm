@@ -15,19 +15,23 @@ class mats_cipher{
 	private:
 		vector<string> s_blocks;
 		static const unsigned char s_box[256];
-		string XOR (string s1, string s2);	  
 
-		string single_encipher(string s_in, string i_key);
-		string single_decipher(string s_in, string i_key);
-		
-		pssss do_modified_feistel(pssss p, string i_key);
-		string sub_bytes(string s_in);
-		string get_sha256(string s_in);
-		string convert_256_to_128(string s);
 	public: 
 		bool isCBC, isCFB;
 		mats_cipher();		
-		string do_encipher(string s_in, string g_key);
-		string do_decipher(string s_in, string g_key);
+		
+		string XOR (string s1, string s2);	  
+		char XOR(char c1, char c2);
+
+		string single_encipher(string s, string key);
+		string single_decipher(string s, string key);
+		
+		string do_modified_feistel(string p, string key);
+		string sub_bytes(string s);
+		string get_sha256(string s);
+		string convert_256_to_128(string s);
+
+		string do_encipher(string s, string key);
+		string do_decipher(string s, string key);
 };
 

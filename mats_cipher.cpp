@@ -31,89 +31,56 @@ string mats_cipher::XOR(string s1, string s2) {
 	return ans;
 }
 
-string mats_cipher::single_encipher(string s_in, string i_key) {
-	string r_key = i_key;
-
-	// divide into 2x2 part
-	//   _ _
-	//u |_|_|
-	//d |_|_|
-	//   l r
-
-	string u_in = s_in.substr(0, s_in.length()/2);	 // up part
-	string u_l_in = u_in.substr(0, s_in.length()/2);   // up-left part
-	string u_r_in = u_in.substr(s_in.length()/2);	  // up-right part
-	
-	string d_in = s_in.substr(s_in.length()/2);		// down part
-	string d_l_in = u_in.substr(0, s_in.length()/2);   // down-left part
-	string d_r_in = u_in.substr(s_in.length()/2);	  // down-right part
-	
-	// pss is pair<string, string>
-	pss p_u (u_l_in, u_r_in);
-	pss p_d (d_l_in, d_r_in);
-	
-	// pssss is pair<pair<string, string>, pair<string, string>>
-	pssss p_in (p_u, p_d);
-	pssss p_out = p_in;
-	
-	//do the modified feistel round 16 times
-	for(int i=0; i<16; i++) { 
-		p_out = do_modified_feistel(p_out, r_key);
-		r_key = convert_256_to_128(get_sha256(r_key));
-	}
-	string ans = p_out.up.left + p_out.up.right + p_out.down.left + p_out.down.right;
+char mats_cipher::XOR(char c1, char c2) {
+	char ans = c1^c2;
 	return ans;
 }
 
-string mats_cipher::single_decipher(string s_in, string i_key) { //TODO
-	vector<string> r_key;
-	r_key.push_back(i_key);
+string mats_cipher::single_encipher(string s, string key) {
+	assert(s.size() == 16);
 
-	// divide into 2x2 part
-	string u_in = s_in.substr(0, s_in.length()/2);	 // up part
-	string u_l_in = u_in.substr(0, s_in.length()/2);   // up-left part
-	string u_r_in = u_in.substr(s_in.length()/2);	  // up-right part
-	
-	string d_in = s_in.substr(s_in.length()/2);		// down part
-	string d_l_in = u_in.substr(0, s_in.length()/2);   // down-left part
-	string d_r_in = u_in.substr(s_in.length()/2);	  // down-right part
-	
-	// pss is pair<string, string>
-	pss p_u (u_l_in, u_r_in);
-	pss p_d (d_l_in, d_r_in);
-	
-	// pssss is pair<pair<string, string>, pair<string, string>>
-	pssss p_in (p_u, p_d);
-	pssss p_out = p_in;
-	
-	//generate round key
-	for(int i = 1; i < 16; i++)
-		r_key.push_back(get_sha256(r_key[i-1]));
+	string round_key = convert_256_to_128(get_sha256(key));
+	string out = s;
 
 	//do the modified feistel round 16 times
-	for(int i=15; i>=0; i--) { 
-		p_out = do_modified_feistel(p_out, r_key[i]);
+	for(int i=0; i<16; i++) {
+        cout << out.size() << " " << round_key.size() << endl;
+		assert(out.size() == round_key.size());
+		out = do_modified_feistel(out, round_key);
+		round_key = convert_256_to_128(get_sha256(round_key));
 	}
-	string ans = p_out.up.left + p_out.up.right + p_out.down.left + p_out.down.right;
-	return ans;
+	string result = out;
+	return result;
+}
+
+string mats_cipher::single_decipher(string s, string key) {
+	assert(s.size() == 16);
+
+	string round_key = convert_256_to_128(get_sha256(key));
+	string out = s;
+
+	//do the modified feistel round 16 times
+	for(int i=0; i<16; i++) {
+		assert(out.size() == round_key.size());
+		out = do_modified_feistel(out, round_key);
+		round_key = convert_256_to_128(get_sha256(round_key));
+	}
+	string result = out;
+	return result;
 }
 
 
-//
-// TODO BAGIAN BAWAH BELUM BERES
-//
-
-string mats_cipher::do_encipher(string s_in, string g_key) {
+string mats_cipher::do_encipher(string s, string key) {
 	s_blocks.clear(); //clear blocks of string
 	
-	//partitioning s_in into s_blocks
+	//partitioning s into s_blocks
 	string temp="";
-	for(int i=0; i<s_in.size(); i++) {
+	for(int i=0; i<s.size(); i++) {
 		if(i%16==0) {
 			if(i>0) s_blocks.push_back(temp);
 			temp = "";
 		}
-		temp += s_in[i];
+		temp += s[i];
 	}
 	if(temp!="") { //handling last string, padding zeroes in the back until length = 32 
 		string last_s = temp;
@@ -123,25 +90,25 @@ string mats_cipher::do_encipher(string s_in, string g_key) {
 	}
 	
 	//get round1 key
-	string r_key = convert_256_to_128(get_sha256(g_key));
+	string round_key = convert_256_to_128(get_sha256(key));
 	string ans="";
 	
-	if (isCBC) { //TO_TEST
-		//make initialization vector dari g_key
-		string init_v = convert_256_to_128(get_sha256(g_key));
+	if (isCBC) {
+		//create initialization vector from key
+		string init_v = convert_256_to_128(get_sha256(key));
 
 		for(int i=0; i<s_blocks.size(); i++) { //do encryption
 			string result = XOR(init_v,s_blocks[i]);
-			init_v = single_encipher(result, r_key);
+			init_v = single_encipher(result, round_key);
 			ans += init_v;
 		}
 	}
-	else if (isCFB) { //TO_TEST
-		//make initialization vector dari g_key
-		string init_v = convert_256_to_128(get_sha256(g_key));
+	else if (isCFB) {
+		//create initialization vector from key
+		string init_v = convert_256_to_128(get_sha256(key));
 		
 		for(int i=0; i<s_blocks.size()*16; i++) { //do encryption
-			string MSC = "" + single_encipher(init_v, r_key).substr(0,1);
+			string MSC = "" + single_encipher(init_v, round_key).substr(0,1);
 			string plainchar = "" + s_blocks[i/16].substr(i%16,1);
 			string result = XOR(MSC,plainchar);
 			ans += result;
@@ -150,22 +117,23 @@ string mats_cipher::do_encipher(string s_in, string g_key) {
 	}
 	else	//encipher each block, it is ECB mode
 	for(int i=0; i<s_blocks.size(); i++) {
-		string s_b = single_encipher(s_blocks[i], r_key);
+		string s_b = single_encipher(s_blocks[i], round_key);
 		ans += s_b;
 	}
 	return ans;
 }
 
-string mats_cipher::do_decipher(string s_in, string g_key) {
+// TODO
+string mats_cipher::do_decipher(string s, string key) {
 	s_blocks.clear(); //clear blocks of string
 	//partitioning s_in into s_blocks
 	string temp="";
-	for(int i=0; i<s_in.size(); i++) {
+	for(int i=0; i<s.size(); i++) {
 		if(i%16==0) {
 			if(i>0) s_blocks.push_back(temp);
 			temp = "";
 		}
-		temp += s_in[i];
+		temp += s[i];
 	}
 	if(temp!="") { //handling last string, padding zeroes in the back until length = 32 
 		string last_s = temp;
@@ -175,25 +143,25 @@ string mats_cipher::do_decipher(string s_in, string g_key) {
 	}
 	
 	//get round1 key
-	string r_key = convert_256_to_128(get_sha256(g_key));
+	string round_key = convert_256_to_128(get_sha256(key));
 	string ans="";
 	
 	if (isCBC) {
-		//make initialization vector dari g_key
-		string init_v = convert_256_to_128(get_sha256(g_key));
+		//create initialization vector from g_key
+		string init_v = convert_256_to_128(get_sha256(key));
 		
 		for(int i=0; i<s_blocks.size(); i++) { //do encryption
-			string dec = single_decipher(s_blocks[i], r_key);
+			string dec = single_decipher(s_blocks[i], round_key);
 			string result = XOR(dec,init_v);
 			ans += result;
 			init_v = s_blocks[i];
 		}
 	}
 	else if(isCFB) {
-		string init_v = convert_256_to_128(get_sha256(g_key));
+		string init_v = convert_256_to_128(get_sha256(key));
 		
 		for(int i=0; i<s_blocks.size()*16; i++) { //do encryption
-			string MSC = "" + single_encipher(init_v, r_key).substr(0,1);
+			string MSC = "" + single_encipher(init_v, round_key).substr(0,1);
 			string cipherchar = "" + s_blocks[i/16].substr(i%16,1);
 			string result = XOR(MSC,cipherchar);
 			ans += result;
@@ -202,65 +170,82 @@ string mats_cipher::do_decipher(string s_in, string g_key) {
 	}
 	else	//encipher each block, it is ECB mode
 	for(int i=0; i<s_blocks.size(); i++) {
-		string s_b = single_decipher(s_blocks[i], r_key);
+		string s_b = single_decipher(s_blocks[i], round_key);
 		ans += s_b;
 	}
 	return ans;
 }
-		
-pssss mats_cipher::do_modified_feistel(pssss p, string i_key) {
-	//substitute bytes
-	//r_in = sub_bytes(r_in);
-	
-    string key = convert_256_to_128(i_key);
 
-	// create string to make implementation easier
-	string pbox_in[2][2] = {{p.up.right, p.up.left},
-							{p.down.right, p.down.left}};
+
+string mats_cipher::do_modified_feistel(string s, string key) {
+	assert(key.size() == 16);
+	assert(s.size() == 16);
+
+	//substitute bytes
+	//s = sub_bytes(s);
 	
-	// buat nyari 4 index antara {0, 1, 2, 3} yang akan diXOR
-	// dengan hasil melihat hasil mod terbanyak
-	// second = indexnya, first = banyaknya
+	// create box of string 2x2 to make implementation easier
+	string atas = s.substr(0, s.length()/2);
+	string atas_kiri = atas.substr(0, atas.length()/2);
+	string atas_kanan = atas.substr(atas.length()/2);
+	string bawah = s.substr(s.length()/2);
+	string bawah_kiri = bawah.substr(0, bawah.length()/2);
+	string bawah_kanan = bawah.substr(bawah.length()/2);
+	string sbox[4] = {atas_kiri, atas_kanan, bawah_kiri, bawah_kanan};
+	
+	// find 2 from 4 index between {0, 1, 2, 3} that will be encrypted
 	vector<pair<int,int> > tot;
 	for(int i=0; i<4; i++)
 		tot.push_back(make_pair(0, i));
 
-	for(int a=0; a<2; a++) //up-down
-		for(int b=0; b<2; b++) // left-right
-			for(int i=0; i<4; i++) {
-				int bil0 = int(pbox_in[a][b][i]) & 0XF;
-				int bil1 = int(pbox_in[a][b][i] >> 4) & 0XF;
-				tot[(bil0+bil1)%4].first++;
-			}
+	for(int i=0; i<16; i++) {
+		int bil1 = int(key[i]) & 0XF;
+		int bil2 = int(key[i] >> 4) & 0XF;
+		tot[(bil1+bil2)%4].first++;
+	}
 
 	// urutkan berdasarkan "banyak"nya (first) ascending
-	// jika sama urutkan dengan index (second) lebih kecil di depan
-    // jadi ambil tot[3].second sama tot[2].second (2 paling belakang)
+	// jika sama, urutkan dengan index (second) lebih kecil di depan
+	// jadi ambil tot[3].second sama tot[2].second (alias 2 paling belakang)
 	sort(tot.begin(), tot.end());
+	int choose[2] = {tot[3].second, tot[2].second};
 
-    // enkrip pake orientasi dari key
-    for(int i=0; i<16; i++) {
-        // TODO        
-    }
+	// enkrip 2 blok terpilih dengan orientasi dari key
+	for(int i=0; i<16; i++) {
+		int j=i;
 
-	pssss p_ans;
-	return p_ans;
+		int tot=key[j];
+		while(j-4>=0) {
+			j -= 4;
+			tot += key[j];
+		}
+
+		int nomor = tot%8;
+		int idx_blok = tot/4;
+		int idx_char = tot%4;
+		
+		sbox[choose[idx_blok]][idx_char] = XOR(key[i], sbox[choose[idx_blok]][idx_char]);
+	}
+
+	string res = sbox[0] + sbox[1] + sbox[2] + sbox[3];
+	return res;
 }
 
-string mats_cipher::sub_bytes(string s_in) {
-	string s_out = "";
-	for (int i = 0; i < s_in.size(); i++) s_out+=s_box[s_in[i]];
-	return s_out;
+string mats_cipher::sub_bytes(string s) {
+	string res = "";
+	for (int i = 0; i < s.size(); i++) res+=s_box[s[i]];
+	return res;
 }
 
-string mats_cipher::get_sha256(string s_in) {
-	string res = sha256(s_in);
+string mats_cipher::get_sha256(string s) {
+	string res = sha256(s);
 	return res;
 }
 
 string mats_cipher::convert_256_to_128(string s) {
-    //cut key into two halves, then XOR them to get 128-bit key
-    string l_s = s.substr(0,s.length()/2);
-    string r_s = s.substr(s.length()/2);
-    string key = XOR(l_s,r_s);
+	//cut key into two halves, then XOR them to get 128-bit key
+	string left = s.substr(0,s.length()/2);
+	string right = s.substr(s.length()/2);
+	string res = XOR(left,right);
+	return res;
 }
