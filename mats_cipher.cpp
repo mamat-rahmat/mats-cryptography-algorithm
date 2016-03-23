@@ -39,12 +39,11 @@ char mats_cipher::XOR(char c1, char c2) {
 string mats_cipher::single_encipher(string s, string key) {
 	assert(s.size() == 16);
 
-	string round_key = convert_256_to_128(get_sha256(key));
+	string round_key = key;
 	string out = s;
 
 	//do the modified feistel round 16 times
 	for(int i=0; i<16; i++) {
-        cout << out.size() << " " << round_key.size() << endl;
 		assert(out.size() == round_key.size());
 		out = do_modified_feistel(out, round_key);
 		round_key = convert_256_to_128(get_sha256(round_key));
@@ -56,7 +55,7 @@ string mats_cipher::single_encipher(string s, string key) {
 string mats_cipher::single_decipher(string s, string key) {
 	assert(s.size() == 16);
 
-	string round_key = convert_256_to_128(get_sha256(key));
+	string round_key = key;
 	string out = s;
 
 	//do the modified feistel round 16 times
@@ -192,7 +191,7 @@ string mats_cipher::do_modified_feistel(string s, string key) {
 	string bawah_kiri = bawah.substr(0, bawah.length()/2);
 	string bawah_kanan = bawah.substr(bawah.length()/2);
 	string sbox[4] = {atas_kiri, atas_kanan, bawah_kiri, bawah_kanan};
-	
+    
 	// find 2 from 4 index between {0, 1, 2, 3} that will be encrypted
 	vector<pair<int,int> > tot;
 	for(int i=0; i<4; i++)
@@ -221,9 +220,9 @@ string mats_cipher::do_modified_feistel(string s, string key) {
 		}
 
 		int nomor = tot%8;
-		int idx_blok = tot/4;
-		int idx_char = tot%4;
-		
+		int idx_blok = nomor/4;
+		int idx_char = nomor%4;
+		//cout << i << " " << idx_blok << " " << idx_char << endl;
 		sbox[choose[idx_blok]][idx_char] = XOR(key[i], sbox[choose[idx_blok]][idx_char]);
 	}
 
